@@ -28,3 +28,11 @@ export async function fetchDashboardSummary() {
   });
   return response.data;
 }
+
+export async function fetchTpsMetrics() {
+  const token = resolveToken();
+  const response = await api.get("/metrics/tps", {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+  return response.data;
+}

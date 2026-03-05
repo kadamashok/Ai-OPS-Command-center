@@ -141,3 +141,9 @@ paths:
       responses:
         '200':
           description: Runbook catalog entries
+  /metrics/tps:
+    get:
+      summary: Real-time TPS metrics per application over rolling 5-minute window
+      responses:
+        '200':
+          description: TPS snapshot with alert statuses for drops/spikes

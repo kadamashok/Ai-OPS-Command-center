@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from carop_common.db import Incident, RecoveryQueue, TransactionEvent, get_db, init_db
 from carop_common.security import current_principal
+from carop_common.tps import tps_store
 from carop_common.web import apply_common_fastapi_config
 
 
@@ -80,6 +81,7 @@ async def dashboard_summary(_: dict = Depends(current_principal), db: Session = 
         .limit(20)
         .all()
     )
+    tps_snapshot = tps_store.snapshot()
 
     return {
         "timestamp": now.isoformat(),
@@ -99,4 +101,11 @@ async def dashboard_summary(_: dict = Depends(current_principal), db: Session = 
             }
             for i in active
         ],
+        "tps_metrics": tps_snapshot["metrics"],
+        "tps_alerts": tps_snapshot["alerts"],
     }
+
+
+@app.get("/metrics/tps")
+async def metrics_tps(_: dict = Depends(current_principal)):
+    return tps_store.snapshot()

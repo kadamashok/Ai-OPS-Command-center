@@ -8,6 +8,7 @@ from carop_common.db import Incident, TransactionEvent as TxEventRow, get_db, in
 from carop_common.events import KafkaEventPublisher
 from carop_common.models import IncidentCreate, TransactionEvent
 from carop_common.security import current_principal
+from carop_common.tps import tps_store
 from carop_common.web import apply_common_fastapi_config
 
 publisher = KafkaEventPublisher()
@@ -59,6 +60,7 @@ async def ingest_event(
         observed_at=datetime.now(timezone.utc),
     )
     db.add(row)
+    tps_store.record_event(event.system_name, observed_at=datetime.now(timezone.utc))
 
     incident_payload = None
     if event.status == "failed":

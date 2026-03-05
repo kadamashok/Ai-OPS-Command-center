@@ -59,6 +59,7 @@ body {
   border: 1px solid #355570;
   border-radius: 12px;
   padding: 16px;
+  margin-bottom: 18px;
 }
 
 table {
@@ -78,6 +79,21 @@ th, td {
   border-radius: 8px;
   background: rgba(244, 180, 0, 0.15);
   color: #ffd66e;
+}
+
+.status-normal {
+  background: rgba(31, 191, 117, 0.2);
+  color: #bbf7d0;
+}
+
+.status-drop {
+  background: rgba(239, 68, 68, 0.22);
+  color: #fecaca;
+}
+
+.status-spike {
+  background: rgba(244, 180, 0, 0.22);
+  color: #fde68a;
 }
 
 .error {

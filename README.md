@@ -40,6 +40,8 @@ CAROP monitors and heals cross-platform retail flows across:
 - Real-time command center dashboard
 - Event-driven autonomous orchestrator
 - AI SRE Agent decision engine between diagnostics and automation
+- TPS monitoring for croma.com, OMS, WMS, SAP, Cloud MPOS, and Payment gateway APIs
+  with rolling 5-minute averages, baselines, and drop/spike alerts
 
 ## Tech Stack
 
@@ -83,6 +85,16 @@ CAROP monitors and heals cross-platform retail flows across:
 ```bash
 docker compose -f infra/docker/docker-compose.yml up --build -d
 ```
+
+## TPS Metrics API
+
+- Endpoint: `GET /metrics/tps` on Dashboard Service (`http://localhost:38006/metrics/tps`)
+- Returns:
+  - `current_tps`
+  - `avg_5m_tps`
+  - `baseline_tps`
+  - `status` (`normal`, `drop`, `spike`)
+  - alert list based on configurable threshold ratios
 
 ## Documentation
 

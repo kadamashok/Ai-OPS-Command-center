@@ -1,8 +1,26 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { fetchDashboardSummary } from "../api/client";
+import { fetchDashboardSummary, fetchTpsMetrics } from "../api/client";
 import { IncidentTable } from "../components/IncidentTable";
 import { KpiCard } from "../components/KpiCard";
+import { TpsWidget } from "../components/TpsWidget";
+
+type TpsMetric = {
+  application: string;
+  current_tps: number;
+  avg_5m_tps: number;
+  baseline_tps: number;
+  status: "normal" | "drop" | "spike";
+};
+
+type TpsAlert = {
+  application: string;
+  status: "drop" | "spike";
+  reason: string;
+  current_tps: number;
+  avg_5m_tps: number;
+  baseline_tps: number;
+};
 
 type DashboardPayload = {
   global_business_health: {
@@ -18,17 +36,33 @@ type DashboardPayload = {
     automation: string;
     status: string;
   }>;
+  tps_metrics?: TpsMetric[];
+  tps_alerts?: TpsAlert[];
+};
+
+type TpsPayload = {
+  metrics: TpsMetric[];
+  alerts: TpsAlert[];
 };
 
 export default function App() {
   const [data, setData] = useState<DashboardPayload | null>(null);
+  const [tps, setTps] = useState<TpsPayload | null>(null);
   const [error, setError] = useState<string>("");
 
   useEffect(() => {
-    fetchDashboardSummary().then(setData).catch(() => {
-      setError("Failed to fetch dashboard data. Ensure dashboard-service is reachable.");
-    });
+    Promise.all([fetchDashboardSummary(), fetchTpsMetrics()])
+      .then(([summary, tpsMetrics]) => {
+        setData(summary);
+        setTps(tpsMetrics);
+      })
+      .catch(() => {
+        setError("Failed to fetch dashboard data. Ensure dashboard-service is reachable.");
+      });
   }, []);
+
+  const tpsMetrics = tps?.metrics ?? data?.tps_metrics ?? [];
+  const tpsAlerts = tps?.alerts ?? data?.tps_alerts ?? [];
 
   return (
     <div className="layout">
@@ -48,6 +82,7 @@ export default function App() {
       </section>
 
       <IncidentTable incidents={data?.active_incidents ?? []} />
+      <TpsWidget metrics={tpsMetrics} alerts={tpsAlerts} />
     </div>
   );
 }
