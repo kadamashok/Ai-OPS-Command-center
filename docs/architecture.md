@@ -32,6 +32,7 @@ flowchart LR
       APIGW[API Gateway]
       TM[Transaction Monitor]
       DE[Diagnostic Engine]
+      SRE[AI SRE Agent]
       IS[Incident Service]
       AE[Automation Engine]
       RE[Runbook Executor]
@@ -62,7 +63,8 @@ flowchart LR
 
     KAFKA --> DE
     DE --> IS
-    DE --> AE
+    DE --> SRE
+    SRE --> AE
 
     AE --> RE
     RE --> KAFKA
@@ -78,6 +80,7 @@ flowchart LR
 
     TM --> OTEL
     DE --> OTEL
+    SRE --> OTEL
     AE --> OTEL
     RE --> OTEL
     RPE --> OTEL
@@ -97,17 +100,19 @@ flowchart LR
 2. Event emitted to Kafka topic `carop.anomaly.detected`.
 3. `diagnostic-engine` runs health probes (API, DB, queue, k8s, auth, network).
 4. Root cause event emitted to `carop.rca.completed`.
-5. `automation-engine` selects runbook and emits execution plan.
-6. `runbook-executor` performs actions via Kubernetes API, Ansible, SSH.
-7. `replay-engine` replays failed transactions from recovery queue.
-8. `incident-service` tracks state transitions and audit evidence.
-9. `dashboard-service` exposes real-time status for command center.
+5. `sre-agent` analyzes incident pattern and selects runbook from KB.
+6. `sre-agent` triggers `automation-engine` and `runbook-executor`.
+7. `sre-agent` verifies recovery and optionally executes secondary runbook.
+8. `replay-engine` replays failed transactions from recovery queue.
+9. `incident-service` tracks state transitions and audit evidence.
+10. `dashboard-service` exposes real-time status for command center.
 
 ## Service Responsibilities
 
 - API Gateway: JWT/OAuth2 validation, RBAC, rate limiting, request signing.
 - Transaction Monitor: transaction graph correlation and KPI/SLO monitoring.
 - Diagnostic Engine: deterministic checks + heuristic scoring for root cause.
+- AI SRE Agent: incident analysis, rule-based runbook decision, remediation orchestration, verification and reporting.
 - Automation Engine: policy guardrails, action approvals, blast-radius limits.
 - Runbook Executor: pluggable action adapters (`k8s`, `ansible`, `ssh`, `http-retry`, `queue-replay`).
 - Replay Engine: idempotent retry pipeline with backoff and deduplication keys.
@@ -124,10 +129,10 @@ flowchart LR
 
 ## Autonomous Orchestration
 
-CAROP includes an `orchestrator` microservice that consumes Kafka topics and executes the closed-loop pipeline without manual triggering:
+CAROP includes an `orchestrator` + `sre-agent` workflow for closed-loop automation:
 
 1. Consume `carop.anomaly.detected` and call Diagnostic Engine.
 2. Queue failed transaction in Replay Engine.
-3. Consume `carop.rca.completed` and select remediation runbook.
-4. Trigger Automation Engine and Runbook Executor.
-5. Update Incident status to `pending-replay` and keep audit trace continuity.
+3. `sre-agent` consumes `carop.rca.completed` and selects remediation runbook.
+4. `sre-agent` triggers Automation Engine + Runbook Executor.
+5. `sre-agent` verifies recovery and writes incident report + audit trail.

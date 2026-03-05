@@ -89,4 +89,64 @@ CREATE TABLE audit_logs (
 );
 
 CREATE INDEX idx_audit_logs_created_at ON audit_logs(created_at DESC);
+
+CREATE TABLE incident_patterns (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  service VARCHAR(80) NOT NULL,
+  error_type VARCHAR(80) NOT NULL,
+  pattern_key VARCHAR(120) NOT NULL UNIQUE,
+  severity VARCHAR(20) NOT NULL,
+  probable_root_cause VARCHAR(300) NOT NULL,
+  default_runbook VARCHAR(120) NOT NULL,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_incident_patterns_service_error ON incident_patterns(service, error_type);
+CREATE INDEX idx_incident_patterns_pattern_key ON incident_patterns(pattern_key);
+
+CREATE TABLE runbooks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  runbook_name VARCHAR(120) NOT NULL UNIQUE,
+  description VARCHAR(300) NOT NULL,
+  requires_role VARCHAR(40) NOT NULL DEFAULT 'operator',
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  verification_policy JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_runbooks_enabled ON runbooks(enabled);
+
+CREATE TABLE automation_actions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  incident_id UUID NOT NULL,
+  runbook_name VARCHAR(120) NOT NULL,
+  trigger VARCHAR(200) NOT NULL,
+  executed_by VARCHAR(120) NOT NULL,
+  status VARCHAR(20) NOT NULL,
+  details JSONB NOT NULL DEFAULT '{}'::jsonb,
+  executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_automation_actions_incident_id ON automation_actions(incident_id);
+CREATE INDEX idx_automation_actions_executed_at ON automation_actions(executed_at DESC);
+
+CREATE TABLE incident_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  incident_id UUID NOT NULL,
+  service VARCHAR(80) NOT NULL,
+  error_type VARCHAR(80) NOT NULL,
+  root_cause VARCHAR(300) NOT NULL,
+  action_taken VARCHAR(120) NOT NULL,
+  status VARCHAR(30) NOT NULL,
+  resolution_time_seconds DOUBLE PRECISION,
+  report_json JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_incident_history_incident_id ON incident_history(incident_id);
+CREATE INDEX idx_incident_history_service_error ON incident_history(service, error_type);
 ```

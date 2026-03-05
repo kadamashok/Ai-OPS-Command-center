@@ -23,16 +23,18 @@ docker compose -f infra/docker/docker-compose.yml up --build -d
 
 Endpoints:
 
-- API Gateway: `http://localhost:8000`
-- Transaction Monitor: `http://localhost:8001`
-- Diagnostic Engine: `http://localhost:8002`
-- Automation Engine: `http://localhost:8003`
-- Replay Engine: `http://localhost:8004`
-- Runbook Executor: `http://localhost:8005`
-- Dashboard Service: `http://localhost:8006`
-- Incident Service: `http://localhost:8007`
-- Orchestrator: `http://localhost:8008`
-- Dashboard UI: `http://localhost:5173`
+- API Gateway: `http://localhost:38000`
+- Transaction Monitor: `http://localhost:38001`
+- Diagnostic Engine: `http://localhost:38002`
+- Automation Engine: `http://localhost:38003`
+- Replay Engine: `http://localhost:38004`
+- Runbook Executor: `http://localhost:38005`
+- Dashboard Service: `http://localhost:38006`
+- Incident Service: `http://localhost:38007`
+- Orchestrator: `http://localhost:38008`
+- AI SRE Agent: `http://localhost:38009`
+- Dashboard UI: `http://localhost:35173`
+- Redis: `localhost:36379`
 
 ## 3. Backend local run (without Docker)
 

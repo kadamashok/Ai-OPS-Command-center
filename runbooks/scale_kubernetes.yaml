@@ -1,0 +1,7 @@
+name: scale_kubernetes
+description: Scale replicas to absorb traffic and reduce failure rate.
+actions:
+  - type: k8s_scale
+    namespace: retail
+    deployment: oms-service
+    replicas: 6

@@ -20,6 +20,12 @@ backend/
     incident-service/app/main.py
     dashboard-service/app/main.py
     orchestrator/app/main.py
+    sre-agent/app/main.py
+    sre-agent/app/incident_analyzer.py
+    sre-agent/app/decision_engine.py
+    sre-agent/app/runbook_executor.py
+    sre-agent/app/verification_engine.py
+    sre-agent/app/security.py
 ```
 
 ## Service contracts
@@ -32,7 +38,8 @@ backend/
 - `replay-engine`: queues and replays failed business transactions.
 - `incident-service`: incident state and status lifecycle.
 - `dashboard-service`: aggregates KPI and incident views for UI.
-- `orchestrator`: Kafka consumer that drives `detect -> diagnose -> auto-fix -> recovery` automatically.
+- `orchestrator`: Kafka consumer that triggers diagnostics and recovery queueing.
+- `sre-agent`: AI SRE decision service that maps diagnostic patterns to runbooks, executes remediation, verifies outcome, and writes incident reports.
 
 ## Cross-cutting concerns
 

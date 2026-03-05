@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from typing import Generator
 from uuid import uuid4
 
-from sqlalchemy import JSON, DateTime, Integer, String, Text, create_engine
+from sqlalchemy import JSON, Boolean, DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.exc import IntegrityError, OperationalError
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
 
@@ -102,6 +102,63 @@ class AuditLog(Base):
     result: Mapped[str] = mapped_column(String(30))
     correlation_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     details: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class IncidentPattern(Base):
+    __tablename__ = "incident_patterns"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    service: Mapped[str] = mapped_column(String(80), index=True)
+    error_type: Mapped[str] = mapped_column(String(80), index=True)
+    pattern_key: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    severity: Mapped[str] = mapped_column(String(20))
+    probable_root_cause: Mapped[str] = mapped_column(String(300))
+    default_runbook: Mapped[str] = mapped_column(String(120))
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    metadata_json: Mapped[dict] = mapped_column("metadata", JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class RunbookCatalog(Base):
+    __tablename__ = "runbooks"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    runbook_name: Mapped[str] = mapped_column(String(120), unique=True, index=True)
+    description: Mapped[str] = mapped_column(String(300))
+    requires_role: Mapped[str] = mapped_column(String(40), default="operator")
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    verification_policy: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AutomationAction(Base):
+    __tablename__ = "automation_actions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    incident_id: Mapped[str] = mapped_column(String(36), index=True)
+    runbook_name: Mapped[str] = mapped_column(String(120), index=True)
+    trigger: Mapped[str] = mapped_column(String(200))
+    executed_by: Mapped[str] = mapped_column(String(120), default="AI_SRE_AGENT")
+    status: Mapped[str] = mapped_column(String(20))
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    executed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
+
+
+class IncidentHistory(Base):
+    __tablename__ = "incident_history"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    incident_id: Mapped[str] = mapped_column(String(36), index=True)
+    service: Mapped[str] = mapped_column(String(80), index=True)
+    error_type: Mapped[str] = mapped_column(String(80), index=True)
+    root_cause: Mapped[str] = mapped_column(String(300))
+    action_taken: Mapped[str] = mapped_column(String(120))
+    status: Mapped[str] = mapped_column(String(30))
+    resolution_time_seconds: Mapped[float | None] = mapped_column(Float, nullable=True)
+    report_json: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, index=True)
 
 

@@ -42,3 +42,10 @@ CI pipeline includes:
 - Containers run as non-root user with read-only root FS.
 - Distroless/slim base images and pinned dependency versions.
 - Kubernetes: RBAC, NetworkPolicies, Pod Security standards, seccomp runtime/default.
+
+## AI SRE Agent Governance
+
+- All automated runbook actions are written to `audit_logs` and `automation_actions`.
+- Runbook catalog supports admin-controlled enable/disable to prevent unauthorized automation.
+- Manual `runbook/execute` and `incident/analyze` APIs require operator role; governance toggles require admin.
+- Redis-backed rate limiting protects SRE Agent APIs from abuse.

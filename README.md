@@ -39,6 +39,7 @@ CAROP monitors and heals cross-platform retail flows across:
 - Runbook library for common operational incidents
 - Real-time command center dashboard
 - Event-driven autonomous orchestrator
+- AI SRE Agent decision engine between diagnostics and automation
 
 ## Tech Stack
 
@@ -58,6 +59,7 @@ CAROP monitors and heals cross-platform retail flows across:
 - `infra/docker/` compose and Dockerfiles
 - `infra/k8s/` base and security manifests
 - `infra/ansible/` runbooks and inventory
+- `runbooks/` SRE Agent generic runbook definitions
 - `docs/` architecture, APIs, schema, security, installation
 - `.github/workflows/` CI/CD and security automation
 
@@ -72,6 +74,7 @@ CAROP monitors and heals cross-platform retail flows across:
 - Dashboard Service: `http://localhost:38006`
 - Incident Service: `http://localhost:38007`
 - Orchestrator: `http://localhost:38008`
+- AI SRE Agent: `http://localhost:38009`
 - Dashboard UI: `http://localhost:35173`
 - Prometheus: `http://localhost:39090`
 
@@ -87,4 +90,5 @@ docker compose -f infra/docker/docker-compose.yml up --build -d
 - [API Spec](docs/api-spec.yaml)
 - [Database Schema](docs/database-schema.sql)
 - [Security Controls](docs/security-controls.md)
+- [AI SRE Agent](docs/sre-agent.md)
 - [Installation Guide](docs/installation-guide.md)

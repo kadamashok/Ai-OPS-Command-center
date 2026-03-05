@@ -1,0 +1,9 @@
+name: restart_service
+description: Restart a degraded workload and warm up endpoints.
+actions:
+  - type: k8s_restart
+    namespace: retail
+    deployment: oms-service
+  - type: api_retry
+    endpoint: https://oms.internal/health
+    retries: 3

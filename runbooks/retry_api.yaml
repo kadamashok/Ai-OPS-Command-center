@@ -1,0 +1,6 @@
+name: retry_api
+description: Retry failed API operations with bounded attempts.
+actions:
+  - type: api_retry
+    endpoint: https://wms.internal/api/orders
+    retries: 5

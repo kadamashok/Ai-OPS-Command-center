@@ -99,3 +99,100 @@ spec:
   ports:
     - port: 80
       targetPort: 8006
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-agent
+  namespace: carop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sre-agent
+  template:
+    metadata:
+      labels:
+        app: sre-agent
+    spec:
+      serviceAccountName: carop-runtime
+      containers:
+        - name: sre-agent
+          image: carop/backend:latest
+          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8009"]
+          workingDir: /app/backend/services/sre-agent/app
+          env:
+            - name: PYTHONPATH
+              value: /app/backend/libs/common
+            - name: KAFKA_BOOTSTRAP
+              value: kafka:9092
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+            - name: DIAGNOSTIC_URL
+              value: http://diagnostic-engine:8002
+            - name: AUTOMATION_URL
+              value: http://automation-engine:8003
+            - name: RUNBOOK_URL
+              value: http://runbook-executor:8005
+            - name: DASHBOARD_URL
+              value: http://dashboard-service:8006
+            - name: TRANSACTION_MONITOR_URL
+              value: http://transaction-monitor:8001
+            - name: INCIDENT_URL
+              value: http://incident-service:8007
+          ports:
+            - containerPort: 8009
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sre-agent
+  namespace: carop
+spec:
+  selector:
+    app: sre-agent
+  ports:
+    - port: 80
+      targetPort: 8009
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: carop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: carop
+spec:
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379

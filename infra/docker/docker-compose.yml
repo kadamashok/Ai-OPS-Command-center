@@ -14,6 +14,10 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
 
+  redis:
+    image: redis:7-alpine
+    ports: ["36379:6379"]
+
   kafka:
     image: confluentinc/cp-kafka:7.5.3
     depends_on: [zookeeper]
@@ -161,6 +165,28 @@ services:
       INCIDENT_URL: http://incident-service:8007
     ports: ["38008:8008"]
     depends_on: [kafka, diagnostic-engine, automation-engine, replay-engine, incident-service, runbook-executor]
+
+  sre-agent:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8009
+    working_dir: /app/backend/services/sre-agent/app
+    environment:
+      SERVICE_NAME: sre-agent
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      REDIS_URL: redis://redis:6379/0
+      DIAGNOSTIC_URL: http://diagnostic-engine:8002
+      AUTOMATION_URL: http://automation-engine:8003
+      RUNBOOK_URL: http://runbook-executor:8005
+      DASHBOARD_URL: http://dashboard-service:8006
+      TRANSACTION_MONITOR_URL: http://transaction-monitor:8001
+      INCIDENT_URL: http://incident-service:8007
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38009:8009"]
+    depends_on: [postgres, kafka, redis, diagnostic-engine, automation-engine, transaction-monitor]
 
   dashboard-ui:
     build:

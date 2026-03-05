@@ -1,0 +1,8 @@
+name: clear_queue
+description: Drain blocked integration queue and restart consumers.
+actions:
+  - type: queue_drain
+    queue: sap.integration.dispatch
+  - type: restart_integration
+    host_group: sap_nodes
+    service: sap-bridge
