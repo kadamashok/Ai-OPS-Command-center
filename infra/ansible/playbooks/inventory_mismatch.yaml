@@ -1,0 +1,10 @@
+﻿name: inventory_mismatch
+trigger:
+  root_cause: inventory mismatch
+actions:
+  - type: run_reconciliation
+    systems: ["WMS", "OMS", "MPOS", "ECOM"]
+  - type: api_retry
+    endpoint: https://oms.internal/api/inventory/reconcile
+    retries: 2
+

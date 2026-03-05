@@ -1,0 +1,12 @@
+﻿name: sap_queue_stuck
+trigger:
+  root_cause: SAP integration queue backlog
+actions:
+  - type: queue_drain
+    queue: sap.integration.dispatch
+  - type: restart_integration
+    host_group: sap_nodes
+    service: sap-bridge
+  - type: replay_transactions
+    flow_type: store_billing
+

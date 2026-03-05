@@ -1,0 +1,12 @@
+﻿name: db_pool_exhaustion
+trigger:
+  root_cause: database connection pool exhaustion
+actions:
+  - type: k8s_scale
+    namespace: retail
+    deployment: oms-service
+    replicas: 6
+  - type: restart_integration
+    host_group: db_proxy_nodes
+    service: pgbouncer
+

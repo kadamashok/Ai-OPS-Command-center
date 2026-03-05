@@ -1,0 +1,47 @@
+﻿apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress-egress
+  namespace: carop
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: carop
+  name: carop-automation-role
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services", "endpoints"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets"]
+    verbs: ["get", "list", "watch", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: carop-automation-rb
+  namespace: carop
+subjects:
+  - kind: ServiceAccount
+    name: carop-runtime
+    namespace: carop
+roleRef:
+  kind: Role
+  name: carop-automation-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: carop-secrets
+  namespace: carop
+type: Opaque
+stringData:
+  JWT_SECRET: replace-in-prod
+  DB_PASSWORD: replace-in-prod

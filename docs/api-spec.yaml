@@ -1,0 +1,93 @@
+﻿# CAROP API Contract (Condensed OpenAPI)
+
+openapi: 3.1.0
+info:
+  title: CAROP APIs
+  version: 1.0.0
+servers:
+  - url: https://carop.company.internal
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Incident:
+      type: object
+      properties:
+        id: { type: string }
+        status: { type: string }
+        severity: { type: string }
+        title: { type: string }
+        root_cause: { type: string }
+        detected_at: { type: string, format: date-time }
+    AutomationRequest:
+      type: object
+      required: [incident_id, runbook_name]
+      properties:
+        incident_id: { type: string }
+        runbook_name: { type: string }
+        parameters: { type: object }
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/health/global:
+    get:
+      summary: Global business health KPI snapshot
+      responses:
+        '200':
+          description: KPI payload
+  /api/v1/incidents:
+    get:
+      summary: List active incidents
+      responses:
+        '200':
+          description: Incident list
+    post:
+      summary: Create incident
+      requestBody:
+        required: true
+      responses:
+        '201':
+          description: Created
+  /api/v1/incidents/{incident_id}/diagnose:
+    post:
+      summary: Trigger RCA diagnostics
+      parameters:
+        - in: path
+          name: incident_id
+          required: true
+          schema: { type: string }
+      responses:
+        '202':
+          description: Accepted
+  /api/v1/automation/execute:
+    post:
+      summary: Execute remediation runbook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AutomationRequest'
+      responses:
+        '202':
+          description: Runbook execution started
+  /api/v1/recovery/replay/{transaction_id}:
+    post:
+      summary: Replay failed transaction
+      parameters:
+        - in: path
+          name: transaction_id
+          required: true
+          schema: { type: string }
+      responses:
+        '202':
+          description: Replay accepted
+  /api/v1/runbooks:
+    get:
+      summary: List available runbooks
+      responses:
+        '200':
+          description: Runbook catalog

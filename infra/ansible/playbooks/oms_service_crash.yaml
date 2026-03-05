@@ -1,0 +1,15 @@
+﻿name: oms_service_crash
+trigger:
+  root_cause: OMS service unavailable
+actions:
+  - type: k8s_restart
+    namespace: retail
+    deployment: oms-service
+  - type: k8s_scale
+    namespace: retail
+    deployment: oms-service
+    replicas: 4
+  - type: api_retry
+    endpoint: https://oms.internal/api/reprocess
+    retries: 5
+

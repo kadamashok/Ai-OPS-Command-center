@@ -1,0 +1,174 @@
+﻿version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: carop
+      POSTGRES_PASSWORD: carop
+      POSTGRES_DB: carop
+    ports: ["35432:5432"]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.3
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.3
+    depends_on: [zookeeper]
+    ports: ["39092:9092"]
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:39092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    working_dir: /app/backend/services/api-gateway/app
+    environment:
+      SERVICE_NAME: api-gateway
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38000:8000"]
+    depends_on: [postgres, kafka]
+
+  transaction-monitor:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8001
+    working_dir: /app/backend/services/transaction-monitor/app
+    environment:
+      SERVICE_NAME: transaction-monitor
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38001:8001"]
+    depends_on: [postgres, kafka]
+
+  diagnostic-engine:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8002
+    working_dir: /app/backend/services/diagnostic-engine/app
+    environment:
+      SERVICE_NAME: diagnostic-engine
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38002:8002"]
+    depends_on: [postgres, kafka]
+
+  automation-engine:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8003
+    working_dir: /app/backend/services/automation-engine/app
+    environment:
+      SERVICE_NAME: automation-engine
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38003:8003"]
+    depends_on: [postgres, kafka]
+
+  replay-engine:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8004
+    working_dir: /app/backend/services/replay-engine/app
+    environment:
+      SERVICE_NAME: replay-engine
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38004:8004"]
+    depends_on: [postgres, kafka]
+
+  runbook-executor:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8005
+    working_dir: /app/backend/services/runbook-executor/app
+    environment:
+      SERVICE_NAME: runbook-executor
+      JWT_SECRET: change-me
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38005:8005"]
+    depends_on: [postgres]
+
+  dashboard-service:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8006
+    working_dir: /app/backend/services/dashboard-service/app
+    environment:
+      SERVICE_NAME: dashboard-service
+      JWT_SECRET: change-me
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38006:8006"]
+    depends_on: [postgres]
+
+  incident-service:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8007
+    working_dir: /app/backend/services/incident-service/app
+    environment:
+      SERVICE_NAME: incident-service
+      JWT_SECRET: change-me
+      POSTGRES_DSN: postgresql://carop:carop@postgres:5432/carop
+      PYTHONPATH: /app/backend/libs/common
+    ports: ["38007:8007"]
+    depends_on: [postgres]
+
+  orchestrator:
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile.backend
+    command: uvicorn main:app --host 0.0.0.0 --port 8008
+    working_dir: /app/backend/services/orchestrator/app
+    environment:
+      SERVICE_NAME: orchestrator
+      JWT_SECRET: change-me
+      KAFKA_BOOTSTRAP: kafka:9092
+      PYTHONPATH: /app/backend/libs/common
+      DIAGNOSTIC_URL: http://diagnostic-engine:8002
+      AUTOMATION_URL: http://automation-engine:8003
+      RUNBOOK_URL: http://runbook-executor:8005
+      REPLAY_URL: http://replay-engine:8004
+      INCIDENT_URL: http://incident-service:8007
+    ports: ["38008:8008"]
+    depends_on: [kafka, diagnostic-engine, automation-engine, replay-engine, incident-service, runbook-executor]
+
+  dashboard-ui:
+    build:
+      context: ../../frontend/dashboard
+      dockerfile: ../../infra/docker/Dockerfile.frontend
+    ports: ["35173:80"]
+    depends_on: [dashboard-service]
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    ports: ["39090:9090"]

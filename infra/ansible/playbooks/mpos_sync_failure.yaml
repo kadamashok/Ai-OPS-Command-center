@@ -1,0 +1,11 @@
+﻿name: mpos_sync_failure
+trigger:
+  root_cause: MPOS sync failure
+actions:
+  - type: restart_integration
+    host_group: mpos_nodes
+    service: mpos-sync
+  - type: api_retry
+    endpoint: https://mpos.internal/api/sync
+    retries: 3
+

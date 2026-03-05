@@ -1,0 +1,59 @@
+﻿name: carop-devsecops
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  security-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python tools
+        run: |
+          pip install bandit semgrep pip-audit
+
+      - name: SAST - Bandit
+        run: bandit -r backend -ll
+
+      - name: SAST - Semgrep
+        run: semgrep --config=auto backend
+
+      - name: Dependency Scan - pip-audit
+        run: pip-audit -r backend/requirements.txt
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Frontend dependency audit
+        run: |
+          cd frontend/dashboard
+          npm install
+          npm audit --audit-level=high
+
+      - name: Secret detection
+        uses: gitleaks/gitleaks-action@v2
+
+      - name: Build backend image
+        run: docker build -f infra/docker/Dockerfile.backend -t carop/backend:ci .
+
+      - name: Container scan
+        uses: aquasecurity/trivy-action@0.24.0
+        with:
+          image-ref: carop/backend:ci
+          format: table
+          exit-code: "1"
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: DAST baseline placeholder
+        run: echo "Run OWASP ZAP baseline in staging deployment job"

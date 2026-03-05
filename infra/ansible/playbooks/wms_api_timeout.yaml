@@ -1,0 +1,13 @@
+﻿name: wms_api_timeout
+trigger:
+  root_cause: WMS API timeout
+actions:
+  - type: failover_endpoint
+    primary: https://wms-primary.internal
+    secondary: https://wms-secondary.internal
+  - type: restart_integration
+    host_group: integration_nodes
+    service: wms-adapter
+  - type: replay_transactions
+    flow_type: online_order
+

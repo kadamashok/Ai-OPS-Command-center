@@ -1,0 +1,101 @@
+﻿apiVersion: v1
+kind: Namespace
+metadata:
+  name: carop
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: carop-runtime
+  namespace: carop
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: carop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      serviceAccountName: carop-runtime
+      containers:
+        - name: api-gateway
+          image: carop/backend:latest
+          imagePullPolicy: IfNotPresent
+          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+          workingDir: /app/backend/services/api-gateway/app
+          env:
+            - name: PYTHONPATH
+              value: /app/backend/libs/common
+          ports:
+            - containerPort: 8000
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: carop
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-service
+  namespace: carop
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dashboard-service
+  template:
+    metadata:
+      labels:
+        app: dashboard-service
+    spec:
+      serviceAccountName: carop-runtime
+      containers:
+        - name: dashboard-service
+          image: carop/backend:latest
+          command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8006"]
+          workingDir: /app/backend/services/dashboard-service/app
+          env:
+            - name: PYTHONPATH
+              value: /app/backend/libs/common
+          ports:
+            - containerPort: 8006
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: carop
+spec:
+  selector:
+    app: dashboard-service
+  ports:
+    - port: 80
+      targetPort: 8006
